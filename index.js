@@ -25,7 +25,7 @@ app.get('/', (req, res) => {
     res.send('running your server')
   })
   const { MongoClient, ServerApiVersion } = require('mongodb');
-  const uri = `mongodb+srv://${process.env.SECRET_KEY}:${process.env.SECRET_PASS}@cluster0.vmhty.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+  const uri = `mongodb+srv://${process.env.DB_KEY}:${process.env.DB_PASS}@cluster0.vmhty.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
   
   // Create a MongoClient with a MongoClientOptions object to set the Stable API version
   const client = new MongoClient(uri, {
@@ -42,8 +42,33 @@ app.get('/', (req, res) => {
       // await client.connect();
       const userCollection=client.db('Beauty-product').collection('users')
 
+ // ----------------- create jwt ---------------------------
+      app.post('/jwt',async(req,res)=>{
+        const email=req.body
+        // console.log(email)
+        const token=jwt.sign(email,process.env.PRIVATE_TOKEN_KEY,{expiresIn:'365d'})
+        res.cookie('token',token,{
+          httpOnly: true,
+          secure: process.env.NODE_ENV==='production',
+          sameSite: process.env.NODE_ENV==='production'?'none':'strict'
+        })
+        .send({success:true})
+      })
+      //------------------ clear token ------------------
 
-
+      app.get('/logOut',async(req,res)=>{
+        try{
+          res
+          .clearCookie('token',{
+            maxAge:0,
+          secure:process.env.NODE_ENV==='production',
+        sameSite:process.env.NODE_ENV==='production'?'none':'strict'})
+        .send({success:true})
+        }
+        catch(error){
+          res.status(500).send(error)
+        }
+        })
 
       // Send a ping to confirm a successful connection
       await client.db("admin").command({ ping: 1 });
