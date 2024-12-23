@@ -11,7 +11,8 @@ const app=express()
 const corsOption={
   origin:"http://localhost:5173",
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+ 
 }
 
 app.use(cors(corsOption))
@@ -40,7 +41,7 @@ app.get('/', (req, res) => {
     try {
       // Connect the client to the server	(optional starting in v4.7)
       // await client.connect();
-      const userCollection=client.db('Beauty-product').collection('users')
+      const usersCollection=client.db('Beauty-product').collection('users')
 
  // ----------------- create jwt ---------------------------
       app.post('/jwt',async(req,res)=>{
@@ -68,6 +69,25 @@ app.get('/', (req, res) => {
         catch(error){
           res.status(500).send(error)
         }
+        })
+        //-----------------add user information in mongodb -----------------
+        app.patch('/user', async(req,res)=>{
+          const user =req.body;
+          // console.log(user);
+          const query={email:user?.email}
+          const isExit=await usersCollection.findOne(query)
+          if(isExit){
+            return
+          }
+          const options = { upsert: true };
+          const updateDoc={
+            $set:{
+              ...user,
+            userTime: Date.now()
+            }
+          }
+        const result=await usersCollection.updateOne(query,updateDoc,options)
+          res.send(result)
         })
 
       // Send a ping to confirm a successful connection
